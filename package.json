@@ -1,11 +1,11 @@
 {
   "name": "calendar",
   "private": true,
-  "type": "module",
   "workspaces": [
     "backend",
     "frontend"
   ],
+  "type": "module",
   "devDependencies": {
     "oxfmt": "^0.79.0",
     "oxlint": "^1.94.0"
