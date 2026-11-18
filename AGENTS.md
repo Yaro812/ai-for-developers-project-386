@@ -33,3 +33,11 @@ The `down` command works by project id alone, without the compose file or the wo
 
 - `.github/workflows/hexlet-check.yml` is auto-generated and runs Hexlet's checks (`hexlet/project-action`) on every push to any branch or tag. Do not edit, delete, or rename it, and do not rename the repository.
 - Hexlet tests become meaningful only after all project steps are completed in the Hexlet interface; a failing check before that is expected.
+
+## Коммиты
+
+Самостоятельно коммить завершённые изменения после проверок.
+Используй Conventional Commits, в scope указывай компонент проекта.
+Для работы по тикету добавляй его ключ в заголовок.
+В описании объясняй причину изменения и новое поведение.
+Включай в коммит только изменения своей задачи.
