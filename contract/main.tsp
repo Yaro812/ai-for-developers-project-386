@@ -120,7 +120,7 @@ model BookingConflictError extends ApiError {
 }
 
 /** The interval is not a slot: off the slot step, outside the booking window or working hours, or not after the current moment. */
-model TimeUnavailableError extends ApiError {
+model UnavailableTimeError extends ApiError {
   @statusCode statusCode: 422;
   code: "TIME_UNAVAILABLE";
 }
@@ -161,7 +161,7 @@ model Booking {
 op createBooking(@path id: string, @body booking: BookingRequest): {
   @statusCode statusCode: 201;
   @body booking: Booking;
-} | ValidationError | EventTypeNotFoundError | BookingConflictError | TimeUnavailableError;
+} | ValidationError | EventTypeNotFoundError | BookingConflictError | UnavailableTimeError;
 
 /** Bookings of every event type that end after the current moment, by start in ascending order. */
 @route("/api/bookings")

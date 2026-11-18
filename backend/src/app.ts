@@ -21,7 +21,7 @@ const EventTypeIdTaken = createError(
   409,
 );
 const EventTypeNotFound = createError("EVENT_TYPE_NOT_FOUND", "Event type %s not found", 404);
-const TimeUnavailable = createError("TIME_UNAVAILABLE", "%s does not start a slot", 422);
+const UnavailableTime = createError("TIME_UNAVAILABLE", "%s does not start a slot", 422);
 const BookingConflict = createError(
   "BOOKING_CONFLICT",
   "The interval overlaps the booking starting at %s",
@@ -129,7 +129,7 @@ export function buildApp(
       const slot = bookingWindow(eventType.durationMinutes)
         .flatMap(({ slots }) => slots)
         .find((slot) => Date.parse(slot.start) === Date.parse(start));
-      if (!slot) throw new TimeUnavailable(start);
+      if (!slot) throw new UnavailableTime(start);
       // Bookings of every event type share the owner's time.
       const conflict = bookings.find((booking) => overlaps(booking, slot));
       if (conflict) throw new BookingConflict(conflict.start);
