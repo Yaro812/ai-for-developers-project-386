@@ -112,3 +112,53 @@ op getEventType(@path id: string): EventType | EventTypeNotFoundError;
 @route("/api/event-types/{id}/slots")
 @get
 op listSlots(@path id: string): BookingWindowDay[] | EventTypeNotFoundError;
+
+/** The interval overlaps a booking of any event type. */
+model BookingConflictError extends ApiError {
+  @statusCode statusCode: 409;
+  code: "BOOKING_CONFLICT";
+}
+
+/** The interval is not a slot: off the slot step, outside the booking window or working hours, or not after the current moment. */
+model TimeUnavailableError extends ApiError {
+  @statusCode statusCode: 422;
+  code: "TIME_UNAVAILABLE";
+}
+
+/** What the guest sends to book a slot; the event type comes in the path. */
+model BookingRequest {
+  /** Any offset is accepted: the server compares moments, not strings. */
+  start: utcDateTime;
+
+  /** At least one non-whitespace character; the server keeps it as received. */
+  @minLength(1)
+  @maxLength(100)
+  @pattern("\\S")
+  guestName: string;
+
+  @format("email")
+  @maxLength(254)
+  guestEmail: string;
+}
+
+/** A booked interval. It has no id: bookings never overlap, so `start` is unique. */
+model Booking {
+  /** The whole event type: event types never change. */
+  eventType: EventType;
+
+  start: utcDateTime;
+
+  /** The start plus the event type's duration. */
+  end: utcDateTime;
+
+  guestName: string;
+  guestEmail: string;
+}
+
+/** Checks the data, then the event type, then whether the interval is a slot, then whether it overlaps a booking of any event type. */
+@route("/api/event-types/{id}/bookings")
+@post
+op createBooking(@path id: string, @body booking: BookingRequest): {
+  @statusCode statusCode: 201;
+  @body booking: Booking;
+} | ValidationError | EventTypeNotFoundError | BookingConflictError | TimeUnavailableError;

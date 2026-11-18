@@ -71,6 +71,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventTypeNotFoundError'
+  /api/event-types/{id}/bookings:
+    post:
+      operationId: createBooking
+      description: Checks the data, then the event type, then whether the interval is a slot, then whether it overlaps a booking of any event type.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: The request breaks the contract schema; Fastify's request validation answers it.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: No event type has this id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundError'
+        '409':
+          description: The interval overlaps a booking of any event type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingConflictError'
+        '422':
+          description: 'The interval is not a slot: off the slot step, outside the booking window or working hours, or not after the current moment.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeUnavailableError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
   /api/event-types/{id}/slots:
     get:
       operationId: listSlots
@@ -129,6 +176,65 @@ components:
       description: |-
         Error body in Fastify's format; clients tell errors apart by `code`.
         A concrete error extends it with `@statusCode` and a literal `code`.
+    Booking:
+      type: object
+      required:
+        - eventType
+        - start
+        - end
+        - guestName
+        - guestEmail
+      properties:
+        eventType:
+          allOf:
+            - $ref: '#/components/schemas/EventType'
+          description: 'The whole event type: event types never change.'
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+          description: The start plus the event type's duration.
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+      description: 'A booked interval. It has no id: bookings never overlap, so `start` is unique.'
+    BookingConflictError:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - BOOKING_CONFLICT
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+      description: The interval overlaps a booking of any event type.
+    BookingRequest:
+      type: object
+      required:
+        - start
+        - guestName
+        - guestEmail
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: 'Any offset is accepted: the server compares moments, not strings.'
+        guestName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          description: At least one non-whitespace character; the server keeps it as received.
+        guestEmail:
+          type: string
+          maxLength: 254
+          format: email
+      description: What the guest sends to book a slot; the event type comes in the path.
     BookingWindowDay:
       type: object
       required:
@@ -232,6 +338,18 @@ components:
           type: string
           format: date-time
       description: An interval a booking may take; the server answers its moments in UTC, e.g. `2026-11-19T06:00:00.000Z`.
+    TimeUnavailableError:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - TIME_UNAVAILABLE
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+      description: 'The interval is not a slot: off the slot step, outside the booking window or working hours, or not after the current moment.'
     ValidationError:
       type: object
       required:

@@ -4,7 +4,13 @@ import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import openapiGlue from "fastify-openapi-glue";
 import type { RouteHandlers } from "./generated/fastify.gen.ts";
-import type { BookingWindowDay, EventType, RouteNotFoundError } from "./generated/types.gen.ts";
+import type {
+  Booking,
+  BookingWindowDay,
+  EventType,
+  RouteNotFoundError,
+  Slot,
+} from "./generated/types.gen.ts";
 
 const specification = fileURLToPath(new URL("../../contract/openapi.yaml", import.meta.url));
 
@@ -15,6 +21,12 @@ const EventTypeIdTaken = createError(
   409,
 );
 const EventTypeNotFound = createError("EVENT_TYPE_NOT_FOUND", "Event type %s not found", 404);
+const TimeUnavailable = createError("TIME_UNAVAILABLE", "%s does not start a slot", 422);
+const BookingConflict = createError(
+  "BOOKING_CONFLICT",
+  "The interval overlaps the booking starting at %s",
+  409,
+);
 
 const ownerTimeZone = "Europe/Moscow";
 const bookingWindowDays = 14;
@@ -52,6 +64,11 @@ function bookingWindow(durationMinutes: number): BookingWindowDay[] {
 // ISO 8601 in UTC with milliseconds, like `Date.prototype.toISOString`.
 const utc = (instant: Temporal.Instant) => instant.toString({ fractionalSecondDigits: 3 });
 
+// Intervals are half-open, so one ending when the other starts does not overlap it.
+// Moments compare as numbers, so any offset in a request works.
+const overlaps = (a: Slot, b: Slot) =>
+  Date.parse(a.start) < Date.parse(b.end) && Date.parse(b.start) < Date.parse(a.end);
+
 export type AppOptions = FastifyServerOptions & {
   /** Directory of the built frontend, served next to the API; without it the app serves only the API. */
   frontendRoot?: string;
@@ -65,6 +82,13 @@ export function buildApp(
   const app = Fastify(options);
   // Each app gets its own empty storage, so tests never share data.
   const eventTypes: EventType[] = [];
+  const bookings: Booking[] = [];
+
+  const findEventType = (id: string) => {
+    const eventType = eventTypes.find((eventType) => eventType.id === id);
+    if (!eventType) throw new EventTypeNotFound(id);
+    return eventType;
+  };
 
   const handlers: RouteHandlers = {
     async getHealth(_request, reply) {
@@ -84,14 +108,33 @@ export function buildApp(
       return reply.code(201).send(eventType);
     },
     async getEventType(request, reply) {
-      const eventType = eventTypes.find(({ id }) => id === request.params.id);
-      if (!eventType) throw new EventTypeNotFound(request.params.id);
-      return reply.code(200).send(eventType);
+      return reply.code(200).send(findEventType(request.params.id));
     },
     async listSlots(request, reply) {
-      const eventType = eventTypes.find(({ id }) => id === request.params.id);
-      if (!eventType) throw new EventTypeNotFound(request.params.id);
-      return reply.code(200).send(bookingWindow(eventType.durationMinutes));
+      const { durationMinutes } = findEventType(request.params.id);
+      // A free slot overlaps no booking of any event type.
+      const days = bookingWindow(durationMinutes).map(({ date, slots }) => ({
+        date,
+        slots: slots.filter((slot) => !bookings.some((booking) => overlaps(booking, slot))),
+      }));
+      return reply.code(200).send(days);
+    },
+    // The checks and the save run with no `await` between them, so of two simultaneous
+    // requests for overlapping intervals the second sees the first booking and gets 409.
+    async createBooking(request, reply) {
+      const eventType = findEventType(request.params.id);
+      const { start, guestName, guestEmail } = request.body;
+      // Only a slot can be booked; this catches every reason the time is unavailable.
+      const slot = bookingWindow(eventType.durationMinutes)
+        .flatMap(({ slots }) => slots)
+        .find((slot) => Date.parse(slot.start) === Date.parse(start));
+      if (!slot) throw new TimeUnavailable(start);
+      // Bookings of every event type share the owner's time.
+      const conflict = bookings.find((booking) => overlaps(booking, slot));
+      if (conflict) throw new BookingConflict(conflict.start);
+      const booking = { eventType, ...slot, guestName, guestEmail };
+      bookings.push(booking);
+      return reply.code(201).send(booking);
     },
   };
 
