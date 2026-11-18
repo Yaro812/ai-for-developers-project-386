@@ -2,7 +2,8 @@ amends "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Config.
 import "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Builtins.pkl"
 
 // Hexlet generates this workflow and forbids editing it.
-exclude = List(".github/workflows/hexlet-check.yml")
+// TypeSpec generates the OpenAPI file, and `mise run contract` compares it byte for byte.
+exclude = List(".github/workflows/hexlet-check.yml", "contract/openapi.yaml")
 
 // Linters must be on PATH: mise.toml pins the binaries, package.json pins oxlint and oxfmt.
 local linters = new Mapping<String, Step> {

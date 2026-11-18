@@ -1,0 +1,92 @@
+openapi: 3.0.0
+info:
+  title: Календарь звонков
+  description: Call booking API. Operations are named in camelCase, so each `operationId` equals the operation name.
+  version: 0.0.0
+tags: []
+paths:
+  /api/event-types:
+    get:
+      operationId: listEventTypes
+      description: All event types in creation order.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+  /api/health:
+    get:
+      operationId: getHealth
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+components:
+  schemas:
+    ApiError:
+      type: object
+      required:
+        - statusCode
+        - code
+        - error
+        - message
+      properties:
+        statusCode:
+          type: integer
+          format: int32
+        code:
+          type: string
+        error:
+          type: string
+        message:
+          type: string
+      description: |-
+        Error body in Fastify's format; clients tell errors apart by `code`.
+        A concrete error extends it with `@statusCode` and a literal `code`.
+    EventType:
+      type: object
+      required:
+        - id
+        - title
+        - durationMinutes
+      properties:
+        id:
+          type: string
+          maxLength: 50
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          description: Part of the booking page address, e.g. `intro-30`.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          description: At least one non-whitespace character.
+        description:
+          type: string
+          maxLength: 500
+          description: Plain text; absent when the owner gave none.
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 15
+          maximum: 540
+          multipleOf: 15
+      description: A kind of call the owner offers.
+    Health:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ok

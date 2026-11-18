@@ -12,13 +12,28 @@ jactionlint = "2.6.0"
 _.path = ["node_modules/.bin"]
 
 [hooks]
-postinstall = { task = "install" }
+postinstall = { task = "sdk" }
 
 [tasks.install]
 description = "Install npm dependencies and Git hooks"
 run = ["npm ci", "hk install --mise"]
 sources = ["package-lock.json"]
 outputs = ["node_modules/.package-lock.json"]
+
+[tasks.generate]
+description = "Compile TypeSpec to contract/openapi.yaml, then generate the SDK and server types from it"
+depends = ["install"]
+run = ["npm run openapi -w contract", "npm run sdk -w contract"]
+
+[tasks.sdk]
+description = "Generate the frontend SDK and backend server types from contract/openapi.yaml"
+depends = ["install"]
+run = "npm run sdk -w contract"
+
+[tasks.contract]
+description = "Fail if contract/openapi.yaml differs from what TypeSpec compiles to"
+depends = ["install"]
+run = "npm run openapi:verify -w contract"
 
 [tasks.lint]
 description = "Run linters and format checks on all files"
@@ -32,22 +47,22 @@ run = "hk fix --all"
 
 [tasks.typecheck]
 description = "Type-check backend and frontend"
-depends = ["install"]
-run = "npm run typecheck --workspaces"
+depends = ["sdk"]
+run = "npm run typecheck --workspaces --if-present"
 
 [tasks.test]
 description = "Run tests"
-depends = ["install"]
+depends = ["sdk"]
 run = "npm test --workspaces --if-present"
 
 [tasks.build]
 description = "Build the frontend for production"
-depends = ["install"]
+depends = ["sdk"]
 run = "npm run build -w frontend"
 
 [tasks.check]
 description = "Run every check; CI runs this same task"
-depends = ["lint", "typecheck", "test"]
+depends = ["lint", "contract", "typecheck", "test"]
 
 # Dev servers: `mise daemons start|stop|status|logs`, addresses in `mise daemons urls`.
 # Automatic ports give each Git worktree its own pair.
