@@ -11,6 +11,7 @@ Hexlet learning project «Календарь звонков»: a call booking se
 - `mise run check` — every check: lint; `mise run contract`, which fails if `contract/openapi.yaml` differs from what TypeSpec compiles to; `mise run sdk`, which regenerates the SDK and server types from `contract/openapi.yaml`; type check; tests. CI (`.github/workflows/check.yml`) runs this same task.
 - `mise run lint` and `mise run fix` — hk steps from `hk.pkl` (oxlint, oxfmt, jactionlint); `fix` applies autofixes.
 - `mise run typecheck`, `mise run test`, `mise run build` — each regenerates the SDK and server types first.
+- `mise run start` — the production build: builds the frontend, then one server serves it and the API on `HOST` and `PORT` (default `127.0.0.1:3000`).
 - One test: `npm test -w backend -- test/health.test.ts` or `npm test -w frontend -- -t "<test name>"`.
 - `mise daemons start`, `stop`, `status`, `logs` — backend and frontend dev servers. `mise daemons urls` shows the ports: 3000 and 5173 in the main checkout, other ports in each worktree.
 
@@ -19,7 +20,7 @@ Hexlet learning project «Календарь звонков»: a call booking se
 npm workspaces with one lockfile at the root.
 
 - `contract/` — the API contract: `main.tsp` (TypeSpec), the committed `openapi.yaml` compiled from it, and `openapi-ts.config.ts` for `@hey-api/openapi-ts`.
-- `backend/` — Fastify. `src/app.ts` builds the app and tests import it; `src/server.ts` only listens on `HOST` and `PORT`. Node runs TypeScript directly, so there is no build step: relative imports need the `.ts` extension and only erasable TypeScript syntax works. `fastify-openapi-glue` registers routes and request validation from `contract/openapi.yaml`; handlers form one object of the generated type `RouteHandlers`, keyed by `operationId`, and reply with `reply.code(n).send(body)`. API tests build the app with `test/app.ts`, which adds `@fastify/response-validation`, and send requests with `app.inject`.
+- `backend/` — Fastify. `src/app.ts` builds the app and tests import it; `src/server.ts` only listens on `HOST` and `PORT` and passes the built frontend `frontend/dist`. With a `frontendRoot`, the app serves its files and answers `index.html` to any other GET path outside `/api/`; an unknown path under `/api/` gets the JSON 404 `ROUTE_NOT_FOUND`. Node runs TypeScript directly, so there is no build step: relative imports need the `.ts` extension and only erasable TypeScript syntax works. `fastify-openapi-glue` registers routes and request validation from `contract/openapi.yaml`; handlers form one object of the generated type `RouteHandlers`, keyed by `operationId`, and reply with `reply.code(n).send(body)`. API tests build the app with `test/app.ts`, which adds `@fastify/response-validation`, and send requests with `app.inject`.
 - `frontend/` — Vite, React, React Router, Mantine. Each page has its own URL (`docs/adr/0002-client-side-routing.md`); tests run on Vitest with Testing Library and jsdom. Pages call the API through the generated SDK at the relative `/api`; the Vite dev server proxies it to the backend. Page tests answer the SDK's requests with `stubServer` from `src/test-server.ts`; a request without a stub fails.
 
 ## Rules
