@@ -254,6 +254,27 @@ test("a booking of another event type over the same time is a conflict", async (
   expect(response.json()).toEqual(conflictError);
 });
 
+test("a shorter booking inside a longer one of another event type is a conflict", async () => {
+  const app = await appWithEventTypes();
+  await app.inject({
+    method: "POST",
+    url: "/api/event-types",
+    payload: { id: "quick-30", title: "Короткий созвон", durationMinutes: 30 },
+  });
+  // Thursday, 10:00–11:00 in Moscow.
+  await createBooking(app, "intro-60", { start: "2026-11-19T07:00:00.000Z", ...guest });
+
+  // Thursday, 10:30–11:00 in Moscow, inside the intro call's second half hour.
+  const response = await createBooking(app, "quick-30", {
+    start: "2026-11-19T07:30:00.000Z",
+    guestName: "Борис",
+    guestEmail: email("boris"),
+  });
+
+  expect(response.statusCode).toBe(409);
+  expect(response.json()).toEqual(conflictError);
+});
+
 async function thursdaySlotStarts(app: App, eventTypeId: string) {
   const response = await app.inject({
     method: "GET",
