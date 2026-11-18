@@ -27,6 +27,10 @@ echo "worktree $dir: compose project $project" \
   "(manual cleanup: docker compose -p $project down -v --remove-orphans)"
 
 cd "$dir"
+# Pinned tools, npm dependencies and Git hooks (postinstall hook in mise.toml).
+mise trust --quiet
+mise install
+
 # --wait blocks until every service is healthy, so the commands below can rely on them.
 if ! docker compose up -d --wait; then
   echo "environment failed to start, rolling back $project"
