@@ -70,7 +70,7 @@ mise daemons start
 mise daemons urls
 ```
 
-В основной копии репозитория бекенд отвечает на http://localhost:3000/health, а фронтенд открывается на http://localhost:5173.
+В основной копии репозитория бекенд отвечает на http://localhost:3000/api/health, а фронтенд открывается на http://localhost:5173 и проксирует `/api` на бекенд.
 
 Остановить серверы:
 
@@ -78,7 +78,7 @@ mise daemons urls
 mise daemons stop
 ```
 
-Запустить все проверки (линтеры, типы, тесты); GitHub Actions запускает ту же команду на каждый push:
+Запустить все проверки (линтеры, сверку OpenAPI с TypeSpec, типы, тесты); GitHub Actions запускает ту же команду на каждый push:
 
 ```bash
 mise run check
