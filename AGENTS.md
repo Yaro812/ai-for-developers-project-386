@@ -12,6 +12,7 @@ Hexlet learning project «Календарь звонков»: a call booking se
 - `mise run lint` and `mise run fix` — hk steps from `hk.pkl` (oxlint, oxfmt, jactionlint); `fix` applies autofixes.
 - `mise run typecheck`, `mise run test`, `mise run build` — each regenerates the SDK and server types first.
 - `mise run start` — the production build: builds the frontend, then one server serves it and the API on `HOST` and `PORT` (default `127.0.0.1:3000`).
+- `docker build -t calendar .` and `docker run -p 3000:3000 calendar` — the same production build in one container, built from sources by the multi-stage `Dockerfile`. Docker is not part of `mise run check`; the `docker` job in `.github/workflows/check.yml` builds the image and checks `GET /api/health` and `GET /`.
 - One test: `npm test -w backend -- test/health.test.ts` or `npm test -w frontend -- -t "<test name>"`.
 - `mise daemons start`, `stop`, `status`, `logs` — backend and frontend dev servers. `mise daemons urls` shows the ports: 3000 and 5173 in the main checkout, other ports in each worktree.
 
