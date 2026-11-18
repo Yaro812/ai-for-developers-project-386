@@ -1,0 +1,8 @@
+{
+  "name": "calendar",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend"
+  ]
+}
