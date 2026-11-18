@@ -7,6 +7,8 @@ node = "26.13.1"
 hk = "2.13.0"
 pitchfork = "2.35.0"
 jactionlint = "2.6.0"
+# The Railway MCP server from .mcp.json: `railway mcp local`.
+railway = "5.74.0"
 
 [env]
 _.path = ["node_modules/.bin"]
