@@ -3,6 +3,11 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "backend"
-  ]
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "oxfmt": "^0.79.0",
+    "oxlint": "^1.94.0"
+  }
 }
