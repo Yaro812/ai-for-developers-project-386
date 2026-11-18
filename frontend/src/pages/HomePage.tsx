@@ -1,4 +1,4 @@
-import { Button, Container, List, Stack, Text, Title } from "@mantine/core";
+import { Anchor, Button, Container, List, Stack, Text, Title } from "@mantine/core";
 import { Link } from "react-router";
 
 export default function HomePage() {
@@ -20,6 +20,9 @@ export default function HomePage() {
         <Button component={Link} to="/book" size="md">
           Записаться на звонок
         </Button>
+        <Anchor component={Link} to="/owner/bookings">
+          Владельцу
+        </Anchor>
       </Stack>
     </Container>
   );

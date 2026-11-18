@@ -50,7 +50,7 @@
 
 ## Установка
 
-Нужен [mise](https://mise.jdx.dev/getting-started.html). Он ставит Node.js и остальные инструменты, npm-зависимости и Git-хуки.
+Нужен [mise](https://mise.jdx.dev/getting-started.html). Он ставит Node.js и остальные инструменты, npm-зависимости, Git-хуки и Chromium для браузерного сценария.
 
 ```bash
 git clone https://github.com/Yaro812/ai-for-developers-project-386.git
@@ -70,7 +70,7 @@ mise daemons start
 mise daemons urls
 ```
 
-В основной копии репозитория бекенд отвечает на http://localhost:3000/health, а фронтенд открывается на http://localhost:5173.
+В основной копии репозитория бекенд отвечает на http://localhost:3000/api/health, а фронтенд открывается на http://localhost:5173 и проксирует `/api` на бекенд.
 
 Остановить серверы:
 
@@ -78,13 +78,33 @@ mise daemons urls
 mise daemons stop
 ```
 
-Запустить все проверки (линтеры, типы, тесты); GitHub Actions запускает ту же команду на каждый push:
+Запустить все проверки (линтеры, сверку OpenAPI с TypeSpec, типы, тесты, браузерный сценарий); GitHub Actions запускает ту же команду на каждый push:
 
 ```bash
 mise run check
 ```
 
+Запустить только браузерный сценарий: Playwright собирает фронтенд и поднимает свежий сервер на свободном порту, владелец создаёт тип встречи, гость бронирует слот, владелец видит бронирование:
+
+```bash
+mise run e2e
+```
+
 Остальные задачи показывает `mise tasks`.
+
+## Запуск в Docker
+
+Образ собирается из исходников, mise для него не нужен. Собрать образ и запустить приложение одним контейнером:
+
+```bash
+docker build -t calendar .
+docker run -p 3000:3000 calendar
+```
+
+Приложение открывается на http://localhost:3000, проверка здоровья отвечает на http://localhost:3000/api/health. Порт внутри контейнера задаёт переменная `PORT`, по умолчанию 3000.
+
+> [!WARNING]
+> Типы встреч и бронирования хранятся в памяти процесса ([ADR-0003](docs/adr/0003-in-memory-storage.md)). Перезапуск контейнера стирает их все.
 
 ---
 

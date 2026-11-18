@@ -26,6 +26,30 @@ test("booking link opens the event type catalog", () => {
   expect(document.title).toBe("Каталог типов встреч");
 });
 
+test("the owner link opens upcoming bookings", () => {
+  renderAt("/");
+
+  fireEvent.click(screen.getByRole("link", { name: "Владельцу" }));
+
+  expect(window.location.pathname).toBe("/owner/bookings");
+  expect(screen.getByRole("heading", { level: 1, name: "Предстоящие бронирования" })).toBeTruthy();
+  expect(document.title).toBe("Предстоящие бронирования");
+});
+
+test("the owner pages link to each other", () => {
+  renderAt("/owner/bookings");
+
+  fireEvent.click(screen.getByRole("link", { name: "Новый тип встречи" }));
+
+  expect(window.location.pathname).toBe("/owner/event-types/new");
+  expect(screen.getByRole("heading", { level: 1, name: "Новый тип встречи" })).toBeTruthy();
+
+  fireEvent.click(screen.getByRole("link", { name: "Предстоящие бронирования" }));
+
+  expect(window.location.pathname).toBe("/owner/bookings");
+  expect(screen.getByRole("heading", { level: 1, name: "Предстоящие бронирования" })).toBeTruthy();
+});
+
 test("opening the catalog directly sets its title until the guest returns home", () => {
   renderAt("/book");
 
