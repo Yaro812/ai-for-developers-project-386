@@ -50,7 +50,7 @@
 
 ## Установка
 
-Нужен [mise](https://mise.jdx.dev/getting-started.html). Он ставит Node.js и остальные инструменты, npm-зависимости и Git-хуки.
+Нужен [mise](https://mise.jdx.dev/getting-started.html). Он ставит Node.js и остальные инструменты, npm-зависимости, Git-хуки и Chromium для браузерного сценария.
 
 ```bash
 git clone https://github.com/Yaro812/ai-for-developers-project-386.git
@@ -78,10 +78,16 @@ mise daemons urls
 mise daemons stop
 ```
 
-Запустить все проверки (линтеры, сверку OpenAPI с TypeSpec, типы, тесты); GitHub Actions запускает ту же команду на каждый push:
+Запустить все проверки (линтеры, сверку OpenAPI с TypeSpec, типы, тесты, браузерный сценарий); GitHub Actions запускает ту же команду на каждый push:
 
 ```bash
 mise run check
+```
+
+Запустить только браузерный сценарий: Playwright собирает фронтенд и поднимает свежий сервер на свободном порту, владелец создаёт тип встречи, гость бронирует слот, владелец видит бронирование:
+
+```bash
+mise run e2e
 ```
 
 Остальные задачи показывает `mise tasks`.
