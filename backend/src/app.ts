@@ -136,6 +136,14 @@ export function buildApp(
       bookings.push(booking);
       return reply.code(201).send(booking);
     },
+    // A call stays upcoming until its end, so the owner sees the guest during the call.
+    async listUpcomingBookings(_request, reply) {
+      const now = Date.now();
+      const upcoming = bookings
+        .filter(({ end }) => Date.parse(end) > now)
+        .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+      return reply.code(200).send(upcoming);
+    },
   };
 
   beforeRoutes?.(app);

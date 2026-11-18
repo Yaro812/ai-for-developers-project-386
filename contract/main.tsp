@@ -162,3 +162,8 @@ op createBooking(@path id: string, @body booking: BookingRequest): {
   @statusCode statusCode: 201;
   @body booking: Booking;
 } | ValidationError | EventTypeNotFoundError | BookingConflictError | TimeUnavailableError;
+
+/** Bookings of every event type that end after the current moment, by start in ascending order. */
+@route("/api/bookings")
+@get
+op listUpcomingBookings(): Booking[];
