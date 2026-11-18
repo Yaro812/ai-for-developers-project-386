@@ -27,7 +27,6 @@ test("booking link opens the event type catalog", () => {
 });
 
 test("opening the catalog directly sets its title until the guest returns home", () => {
-  const homeTitle = document.title;
   renderAt("/book");
 
   expect(document.title).toBe("Каталог типов встреч");
@@ -35,7 +34,7 @@ test("opening the catalog directly sets its title until the guest returns home",
   fireEvent.click(screen.getByRole("link", { name: "На главную" }));
 
   expect(window.location.pathname).toBe("/");
-  expect(document.title).toBe(homeTitle);
+  expect(document.title).toBe("Календарь звонков");
 });
 
 test("an unknown address offers a link back to the home page", () => {
