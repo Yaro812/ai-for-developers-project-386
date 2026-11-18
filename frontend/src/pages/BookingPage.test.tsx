@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { expect, test } from "vitest";
 import App from "../App.tsx";
 import { stubServer } from "../test-server.ts";
@@ -283,4 +283,305 @@ test("an unknown event type says it is not found and links to the catalog on the
     "/book",
   );
   expect(screen.queryByRole("button")).toBeNull();
+});
+
+// With `description`, finds the field only while that message stands under it.
+const nameField = (description?: string) =>
+  screen.getByRole("textbox", { name: "Имя", description }) as HTMLInputElement;
+const emailField = (description?: string) =>
+  screen.getByRole("textbox", { name: "Email", description }) as HTMLInputElement;
+const bookButton = () => screen.queryByRole("button", { name: "Забронировать" });
+const follows = (first: Node, second: Node) =>
+  Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+test("a selected slot opens a form under the slots with the chosen day and time", async () => {
+  stubBookingPage();
+  renderBookingPage("review-90");
+  await screen.findByText("Московское время (UTC+3)");
+
+  expect(bookButton()).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "09:15" }));
+
+  const summary = screen.getByText("пн, 23 ноября, 09:15–10:45");
+  expect(follows(slotButtons().at(-1)!, summary)).toBe(true);
+  expect(nameField().value).toBe("");
+  expect(emailField().value).toBe("");
+  expect(follows(emailField(), bookButton()!)).toBe(true);
+});
+
+// Fake guest addresses on the reserved example.com domain.
+const email = (local: string) => `${local}@example.com`;
+
+function fillGuest(name: string, address: string) {
+  fireEvent.change(nameField(), { target: { value: name } });
+  fireEvent.change(emailField(), { target: { value: address } });
+}
+
+test("another day hides the form, and the name and email return with the next slot", async () => {
+  stubBookingPage();
+  renderBookingPage("review-90");
+  fireEvent.click(await screen.findByRole("button", { name: "09:15" }));
+  fillGuest("Анна", email("anna"));
+
+  fireEvent.click(screen.getByRole("button", { name: "вт, 24 нояб." }));
+
+  expect(bookButton()).toBeNull();
+  expect(screen.queryByRole("textbox")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "14:00" }));
+
+  expect(screen.getByText("вт, 24 ноября, 14:00–15:30")).toBeTruthy();
+  expect([nameField().value, emailField().value]).toEqual(["Анна", email("anna")]);
+});
+
+async function openForm(routes: Parameters<typeof stubServer>[0] = {}) {
+  const fetch = stubBookingPage(routes);
+  renderBookingPage("review-90");
+  fireEvent.click(await screen.findByRole("button", { name: "09:15" }));
+  return fetch;
+}
+
+const bookingRoute = "POST /api/event-types/review-90/bookings";
+const bookRequests = (fetch: ReturnType<typeof stubServer>) =>
+  fetch.mock.calls.filter(([request]) => request.method === "POST");
+
+test.each([
+  ["an empty name", "", email("anna"), "name", "Укажите имя"],
+  ["a name of spaces only", "   ", email("anna"), "name", "Укажите имя"],
+  ["an email without @", "Анна", "anna", "email", "Неверный формат email"],
+  ["an email without a domain", "Анна", "anna@", "email", "Неверный формат email"],
+  ["an email with a space inside", "Анна", email("an na"), "email", "Неверный формат email"],
+] as const)(
+  "%s shows a message under its field and sends nothing",
+  async (_, name, address, key, message) => {
+    const fetch = await openForm();
+
+    fillGuest(name, address);
+    fireEvent.click(bookButton()!);
+
+    expect((key === "name" ? nameField : emailField)(message)).toBeTruthy();
+    expect(bookRequests(fetch)).toEqual([]);
+  },
+);
+
+// The server's answer for the selected Monday 09:15 slot.
+const booking = {
+  eventType: reviewCall,
+  start: "2026-11-23T06:15:00.000Z",
+  end: "2026-11-23T07:45:00.000Z",
+  guestName: "Анна",
+  guestEmail: email("anna"),
+};
+const booked = () => Response.json(booking, { status: 201 });
+
+test("a booking sends the trimmed values, and its confirmation replaces the days, slots and form", async () => {
+  let sent: unknown;
+  await openForm({
+    [bookingRoute]: async (request) => {
+      sent = await request.json();
+      return booked();
+    },
+  });
+
+  fillGuest("  Анна ", ` ${email("anna")}  `);
+  fireEvent.click(bookButton()!);
+
+  const confirmation = await screen.findByRole("region", { name: "Звонок забронирован" });
+  expect(sent).toEqual({
+    start: "2026-11-23T06:15:00.000Z",
+    guestName: "Анна",
+    guestEmail: email("anna"),
+  });
+  expect(within(confirmation).getByRole("heading", { name: "Звонок забронирован" })).toBeTruthy();
+  for (const text of [
+    "Ревью проекта",
+    "пн, 23 ноября, 09:15–10:45",
+    "Московское время (UTC+3)",
+    "Анна",
+    email("anna"),
+  ]) {
+    expect(within(confirmation).getByText(text)).toBeTruthy();
+  }
+  expect(
+    within(confirmation)
+      .getByRole("link", { name: "К каталогу типов встреч" })
+      .getAttribute("href"),
+  ).toBe("/book");
+  // The header stays; the choice and the form are gone.
+  expect(screen.getByRole("heading", { level: 1, name: "Ревью проекта" })).toBeTruthy();
+  expect(screen.getByText("90 мин.")).toBeTruthy();
+  expect(screen.queryAllByRole("button")).toEqual([]);
+  expect(screen.queryAllByRole("textbox")).toEqual([]);
+});
+
+test("the book button is disabled while the request runs", async () => {
+  let answer = (_response: Response) => {};
+  const fetch = await openForm({
+    [bookingRoute]: () => new Promise((resolve) => (answer = resolve)),
+  });
+
+  fillGuest("Анна", email("anna"));
+  fireEvent.click(bookButton()!);
+  await waitFor(() => expect(bookRequests(fetch)).toHaveLength(1));
+
+  expect((bookButton() as HTMLButtonElement).disabled).toBe(true);
+
+  answer(booked());
+
+  expect(await screen.findByRole("region", { name: "Звонок забронирован" })).toBeTruthy();
+});
+
+const apiError = (statusCode: number, code: string, error: string) => () =>
+  Response.json({ statusCode, code, error, message: "Refused" }, { status: statusCode });
+const conflict = apiError(409, "BOOKING_CONFLICT", "Conflict");
+const unavailable = apiError(422, "TIME_UNAVAILABLE", "Unprocessable Entity");
+
+const [friday, saturday, sunday, monday, tuesday, ...rest] = bookingWindow;
+// After the refusal Monday still has free slots, but no longer 09:15.
+const windowWithoutMonday0915 = [
+  friday,
+  saturday,
+  sunday,
+  { ...monday, slots: monday.slots.filter(({ start }) => start !== "2026-11-23T06:15:00.000Z") },
+  tuesday,
+  ...rest,
+];
+
+// The first slots request answers at once; the reload after a refusal waits for `answerReload`.
+function slotsThenReload() {
+  let answerReload = (_window: unknown) => {};
+  let calls = 0;
+  const route = () => {
+    calls += 1;
+    if (calls === 1) return Response.json(bookingWindow);
+    return new Promise<Response>((resolve) => {
+      answerReload = (window) => resolve(Response.json(window));
+    });
+  };
+  return { route, reload: (window: unknown) => answerReload(window), calls: () => calls };
+}
+
+test.each([
+  ["a booking conflict", conflict, "Это время уже занято, выберите другой слот"],
+  ["unavailable time", unavailable, "Это время больше недоступно, выберите другой слот"],
+])(
+  "after %s the page says so above the days, reloads the slots and keeps the day and the input",
+  async (_, refusal, message) => {
+    const slots = slotsThenReload();
+    await openForm({ [slotsRoute]: slots.route, [bookingRoute]: refusal });
+    fillGuest("Анна", email("anna"));
+
+    fireEvent.click(bookButton()!);
+
+    const notice = await screen.findByText(message);
+    // The slots are reloading: an indicator stands in place of the days and slots, the header stays.
+    expect(screen.getByRole("progressbar", { name: "Загрузка" })).toBeTruthy();
+    expect(screen.queryAllByRole("button")).toEqual([]);
+    expect(screen.getByRole("heading", { level: 1, name: "Ревью проекта" })).toBeTruthy();
+    expect(slots.calls()).toBe(2);
+
+    slots.reload(windowWithoutMonday0915);
+
+    expect(await screen.findByRole("button", { name: "пн, 23 нояб.", pressed: true })).toBeTruthy();
+    expect(follows(notice, dayButtons()[0])).toBe(true);
+    expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(slotButtons().map((button) => [button.textContent, pressed(button)])).toEqual([
+      ["09:00", "false"],
+      ["16:30", "false"],
+    ]);
+    expect(bookButton()).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "09:00" }));
+
+    expect(screen.queryByText(message)).toBeNull();
+    expect([nameField().value, emailField().value]).toEqual(["Анна", email("anna")]);
+  },
+);
+
+// The guest picked Tuesday, not the default Monday, before the refusal.
+test.each([
+  [
+    "a day with free slots left stays selected",
+    [{ start: "2026-11-24T12:00:00.000Z", end: "2026-11-24T13:30:00.000Z" }],
+    "вт, 24 нояб.",
+  ],
+  ["a day left without free slots gives way to the first day with them", [], "пн, 23 нояб."],
+])("after a refusal %s", async (_, tuesdaySlots, selectedDay) => {
+  const slots = slotsThenReload();
+  stubBookingPage({ [slotsRoute]: slots.route, [bookingRoute]: conflict });
+  renderBookingPage("review-90");
+  fireEvent.click(await screen.findByRole("button", { name: "вт, 24 нояб." }));
+  fireEvent.click(screen.getByRole("button", { name: "14:00" }));
+  fillGuest("Анна", email("anna"));
+
+  fireEvent.click(bookButton()!);
+  await screen.findByText("Это время уже занято, выберите другой слот");
+  slots.reload([friday, saturday, sunday, monday, { ...tuesday, slots: tuesdaySlots }, ...rest]);
+
+  expect(await screen.findByRole("button", { name: selectedDay, pressed: true })).toBeTruthy();
+  expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(1);
+});
+
+test("after a refusal with no free slots left the page says there is no free time", async () => {
+  const slots = slotsThenReload();
+  await openForm({ [slotsRoute]: slots.route, [bookingRoute]: conflict });
+  fillGuest("Анна", email("anna"));
+
+  fireEvent.click(bookButton()!);
+  await screen.findByText("Это время уже занято, выберите другой слот");
+  slots.reload(bookingWindow.map(({ date }) => noSlots(date)));
+
+  expect(await screen.findByText("В ближайшие 14 дней свободного времени нет")).toBeTruthy();
+  expect(slotButtons()).toEqual([]);
+  expect(bookButton()).toBeNull();
+});
+
+test("after a refusal a failed reload of the slots asks to reload the page", async () => {
+  let calls = 0;
+  await openForm({
+    [slotsRoute]: () => (++calls === 1 ? Response.json(bookingWindow) : serverError()),
+    [bookingRoute]: conflict,
+  });
+  fillGuest("Анна", email("anna"));
+
+  fireEvent.click(bookButton()!);
+
+  expect(await screen.findByText("Не удалось загрузить страницу, обновите её")).toBeTruthy();
+  expect(screen.queryByRole("progressbar")).toBeNull();
+});
+
+test("a data error found by the server is reported and the values stay", async () => {
+  await openForm({ [bookingRoute]: apiError(400, "FST_ERR_VALIDATION", "Bad Request") });
+  fillGuest("Анна", email("anna"));
+
+  fireEvent.click(bookButton()!);
+
+  expect(
+    await screen.findByText("Не удалось сохранить бронирование, проверьте данные"),
+  ).toBeTruthy();
+  expect(screen.getByText("пн, 23 ноября, 09:15–10:45")).toBeTruthy();
+  expect([nameField().value, emailField().value]).toEqual(["Анна", email("anna")]);
+});
+
+test("an event type gone while booking says it no longer exists and links to the catalog, without the header", async () => {
+  await openForm({ [bookingRoute]: apiError(404, "EVENT_TYPE_NOT_FOUND", "Not Found") });
+  fillGuest("Анна", email("anna"));
+
+  fireEvent.click(bookButton()!);
+
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Этот тип встречи больше не существует",
+    }),
+  ).toBeTruthy();
+  expect(document.title).toBe("Этот тип встречи больше не существует");
+  expect(screen.getByRole("link", { name: "К каталогу типов встреч" }).getAttribute("href")).toBe(
+    "/book",
+  );
+  expect(screen.queryByText("Ревью проекта")).toBeNull();
+  expect(screen.queryByText("90 мин.")).toBeNull();
+  expect(screen.queryAllByRole("button")).toEqual([]);
+  expect(screen.queryAllByRole("textbox")).toEqual([]);
 });
