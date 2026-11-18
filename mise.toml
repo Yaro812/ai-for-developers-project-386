@@ -60,6 +60,11 @@ description = "Build the frontend for production"
 depends = ["sdk"]
 run = "npm run build -w frontend"
 
+[tasks.start]
+description = "Build the frontend, then serve it and the API from one server on HOST and PORT (default 127.0.0.1:3000)"
+depends = ["build"]
+run = "npm start -w backend"
+
 [tasks.check]
 description = "Run every check; CI runs this same task"
 depends = ["lint", "contract", "typecheck", "test"]
