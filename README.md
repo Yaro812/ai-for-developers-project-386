@@ -40,20 +40,51 @@
 
 ## Стек
 
-- Разное
+- Бекенд: TypeScript, Node.js 26, Fastify.
+- Фронтенд: TypeScript, Vite, React, Mantine.
+- Тесты: Vitest.
+- Проверки: oxlint, oxfmt, jactionlint и Git-хуки через hk.
+- Окружение: mise фиксирует версии инструментов, задаёт задачи и фоновые серверы.
+
+Цепочка контракта проверена на этих версиях: TypeSpec 1.18 генерирует OpenAPI, а `@hey-api/openapi-ts` 0.99 генерирует из него клиентский SDK на TypeScript.
 
 ## Установка
 
-<!-- Опишите установку: клонирование, зависимости, переменные окружения -->
+Нужен [mise](https://mise.jdx.dev/getting-started.html). Он ставит Node.js и остальные инструменты, npm-зависимости и Git-хуки.
 
 ```bash
 git clone https://github.com/Yaro812/ai-for-developers-project-386.git
 cd ai-for-developers-project-386
+mise trust
+mise install
 ```
 
 ## Использование
 
-<!-- Добавьте примеры запуска и запись asciinema — именно это смотрит работодатель -->
+<!-- Добавьте запись asciinema — именно это смотрит работодатель -->
+
+Запустить бекенд и фронтенд в фоне и узнать их адреса:
+
+```bash
+mise daemons start
+mise daemons urls
+```
+
+В основной копии репозитория бекенд отвечает на http://localhost:3000/health, а фронтенд открывается на http://localhost:5173.
+
+Остановить серверы:
+
+```bash
+mise daemons stop
+```
+
+Запустить все проверки (линтеры, типы, тесты); GitHub Actions запускает ту же команду на каждый push:
+
+```bash
+mise run check
+```
+
+Остальные задачи показывает `mise tasks`.
 
 ---
 
