@@ -10,7 +10,7 @@ Hexlet learning project «Календарь звонков»: a call booking se
 - `mise run check` — every check: lint, type check, tests. CI (`.github/workflows/check.yml`) runs this same task.
 - `mise run lint` and `mise run fix` — hk steps from `hk.pkl` (oxlint, oxfmt, jactionlint); `fix` applies autofixes.
 - `mise run typecheck`, `mise run test`, `mise run build`.
-- One test: `npm test -w backend -- test/smoke.test.ts` or `npm test -w backend -- -t "<test name>"`.
+- One test: `npm test -w backend -- test/smoke.test.ts` or `npm test -w frontend -- -t "<test name>"`.
 - `mise daemons start`, `stop`, `status`, `logs` — backend and frontend dev servers. `mise daemons urls` shows the ports: 3000 and 5173 in the main checkout, other ports in each worktree.
 
 ## Structure
@@ -18,7 +18,7 @@ Hexlet learning project «Календарь звонков»: a call booking se
 npm workspaces with one lockfile at the root.
 
 - `backend/` — Fastify. `src/app.ts` builds the app and tests import it; `src/server.ts` only listens on `HOST` and `PORT`. Node runs TypeScript directly, so there is no build step: relative imports need the `.ts` extension and only erasable TypeScript syntax works.
-- `frontend/` — Vite, React, Mantine.
+- `frontend/` — Vite, React, React Router, Mantine. Each page has its own URL (`docs/adr/0002-client-side-routing.md`); tests run on Vitest with Testing Library and jsdom.
 - `compose.yaml` — dev Postgres. The app does not use it yet.
 
 ## Rules
