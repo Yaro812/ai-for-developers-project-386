@@ -1,6 +1,9 @@
+import { fileURLToPath } from "node:url";
 import { buildApp } from "./app.ts";
 
-const app = buildApp({ logger: true });
+// `mise run build` puts the frontend here; in development Vite serves it instead.
+const frontendRoot = fileURLToPath(new URL("../../frontend/dist", import.meta.url));
+const app = buildApp({ logger: true, frontendRoot });
 
 try {
   await app.listen({
