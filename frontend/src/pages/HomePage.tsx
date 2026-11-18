@@ -3,7 +3,8 @@ import { Link } from "react-router";
 
 export default function HomePage() {
   return (
-    <Container py="xl">
+    <Container component="main" py="xl">
+      <title>Календарь звонков</title>
       <Stack gap="lg" align="flex-start">
         <Title>Календарь звонков</Title>
         <Text size="lg">
