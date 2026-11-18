@@ -5,6 +5,7 @@
   "workspaces": [
     "backend",
     "contract",
+    "e2e",
     "frontend"
   ],
   "type": "module",

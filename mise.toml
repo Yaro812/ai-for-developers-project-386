@@ -12,13 +12,18 @@ jactionlint = "2.6.0"
 _.path = ["node_modules/.bin"]
 
 [hooks]
-postinstall = { task = "sdk" }
+postinstall = [{ task = "browser" }, { task = "sdk" }]
 
 [tasks.install]
 description = "Install npm dependencies and Git hooks"
 run = ["npm ci", "hk install --mise"]
 sources = ["package-lock.json"]
 outputs = ["node_modules/.package-lock.json"]
+
+[tasks.browser]
+description = "Install Chromium for the browser scenario; extra arguments go to playwright install, e.g. --with-deps"
+depends = ["install"]
+run = "playwright install chromium"
 
 [tasks.generate]
 description = "Compile TypeSpec to contract/openapi.yaml, then generate the SDK and server types from it"
@@ -65,9 +70,16 @@ description = "Build the frontend, then serve it and the API from one server on 
 depends = ["build"]
 run = "npm start -w backend"
 
+[tasks.e2e]
+description = "Run the browser scenario; Playwright builds and starts a fresh production server (mise run start) on a free port"
+depends = ["browser"]
+# The server's `mise run start` regenerates the SDK and server types, which these tasks read.
+wait_for = ["typecheck", "test"]
+run = "playwright test --config e2e/playwright.config.ts"
+
 [tasks.check]
 description = "Run every check; CI runs this same task"
-depends = ["lint", "contract", "typecheck", "test"]
+depends = ["lint", "contract", "typecheck", "test", "e2e"]
 
 # Dev servers: `mise daemons start|stop|status|logs`, addresses in `mise daemons urls`.
 # Automatic ports give each Git worktree its own pair.
