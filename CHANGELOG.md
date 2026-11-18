@@ -26,7 +26,6 @@
 * **frontend:** scaffold Vite React app with Mantine ([5cc51cf](https://github.com/Yaro812/ai-for-developers-project-386/commit/5cc51cfb7b3c9d3e332d25a7422bd70ae66a8e86))
 * **frontend:** show the event type on its booking page ([#17](https://github.com/Yaro812/ai-for-developers-project-386/issues/17)) ([9c6875e](https://github.com/Yaro812/ai-for-developers-project-386/commit/9c6875ef7298e9c84753050165c50be204712390))
 * **frontend:** show upcoming bookings to the owner ([#20](https://github.com/Yaro812/ai-for-developers-project-386/issues/20)) ([41e8a71](https://github.com/Yaro812/ai-for-developers-project-386/commit/41e8a71b6b9cab5993ad3fc9a1046f8574b43c97))
-* календарь звонков по спецификации ([#13](https://github.com/Yaro812/ai-for-developers-project-386/issues/13)) ([3ab8691](https://github.com/Yaro812/ai-for-developers-project-386/commit/3ab86911a04bbf5b8c125a47b0bd481ea3d3d5cd))
 
 
 ### Bug Fixes
