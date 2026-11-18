@@ -41,8 +41,8 @@
 ## Стек
 
 - Бекенд: TypeScript, Node.js 26, Fastify.
-- Фронтенд: TypeScript, Vite, React, Mantine.
-- Тесты: Vitest.
+- Фронтенд: TypeScript, Vite, React, React Router, Mantine.
+- Тесты: Vitest, во фронтенде с Testing Library и jsdom.
 - Проверки: oxlint, oxfmt, jactionlint и Git-хуки через hk.
 - Окружение: mise фиксирует версии инструментов, задаёт задачи и фоновые серверы.
 
