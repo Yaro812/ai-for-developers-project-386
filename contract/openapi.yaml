@@ -71,6 +71,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EventTypeNotFoundError'
+  /api/event-types/{id}/slots:
+    get:
+      operationId: listSlots
+      description: Exactly 14 days of the booking window in ascending order, starting with today by the server clock in the owner's time zone.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingWindowDay'
+        '404':
+          description: No event type has this id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeNotFoundError'
   /api/health:
     get:
       operationId: getHealth
@@ -104,6 +129,22 @@ components:
       description: |-
         Error body in Fastify's format; clients tell errors apart by `code`.
         A concrete error extends it with `@statusCode` and a literal `code`.
+    BookingWindowDay:
+      type: object
+      required:
+        - date
+        - slots
+      properties:
+        date:
+          type: string
+          format: date
+          description: The day in the owner's time zone, `Europe/Moscow`.
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/Slot'
+          description: Free slots in ascending order; empty on weekends, a past today, or a fully booked day.
+      description: A day of the booking window.
     EventType:
       type: object
       required:
@@ -178,6 +219,19 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiError'
       description: No route matches a path under `/api/`. No operation returns it, so the server answers it from its not-found handler.
+    Slot:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+      description: An interval a booking may take; the server answers its moments in UTC, e.g. `2026-11-19T06:00:00.000Z`.
     ValidationError:
       type: object
       required:

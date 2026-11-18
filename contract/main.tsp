@@ -71,6 +71,21 @@ model EventType {
   durationMinutes: int32;
 }
 
+/** An interval a booking may take; the server answers its moments in UTC, e.g. `2026-11-19T06:00:00.000Z`. */
+model Slot {
+  start: utcDateTime;
+  end: utcDateTime;
+}
+
+/** A day of the booking window. */
+model BookingWindowDay {
+  /** The day in the owner's time zone, `Europe/Moscow`. */
+  date: plainDate;
+
+  /** Free slots in ascending order; empty on weekends, a past today, or a fully booked day. */
+  slots: Slot[];
+}
+
 @route("/api/health")
 @get
 op getHealth(): Health;
@@ -92,3 +107,8 @@ op createEventType(@body eventType: EventType): {
 @route("/api/event-types/{id}")
 @get
 op getEventType(@path id: string): EventType | EventTypeNotFoundError;
+
+/** Exactly 14 days of the booking window in ascending order, starting with today by the server clock in the owner's time zone. */
+@route("/api/event-types/{id}/slots")
+@get
+op listSlots(@path id: string): BookingWindowDay[] | EventTypeNotFoundError;
