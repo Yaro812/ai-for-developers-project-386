@@ -23,4 +23,29 @@ test("booking link opens the event type catalog", () => {
 
   expect(screen.getByRole("heading", { level: 1, name: "Каталог типов встреч" })).toBeTruthy();
   expect(window.location.pathname).toBe("/book");
+  expect(document.title).toBe("Каталог типов встреч");
+});
+
+test("opening the catalog directly sets its title until the guest returns home", () => {
+  const homeTitle = document.title;
+  renderAt("/book");
+
+  expect(document.title).toBe("Каталог типов встреч");
+
+  fireEvent.click(screen.getByRole("link", { name: "На главную" }));
+
+  expect(window.location.pathname).toBe("/");
+  expect(document.title).toBe(homeTitle);
+});
+
+test("an unknown address offers a link back to the home page", () => {
+  renderAt("/bok");
+
+  expect(screen.getByRole("heading", { level: 1, name: "Страница не найдена" })).toBeTruthy();
+  expect(document.title).toBe("Страница не найдена");
+
+  fireEvent.click(screen.getByRole("link", { name: "На главную" }));
+
+  expect(window.location.pathname).toBe("/");
+  expect(screen.getByRole("heading", { level: 1, name: "Календарь звонков" })).toBeTruthy();
 });
