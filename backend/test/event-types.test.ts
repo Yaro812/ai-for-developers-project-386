@@ -66,12 +66,16 @@ test.each([
   ["an empty title", { ...introCall, title: "" }],
   ["a title of spaces only", { ...introCall, title: "   " }],
   ["a title longer than 100 characters", { ...introCall, title: "a".repeat(101) }],
+  ["a title that is a number", { ...introCall, title: 123 }],
+  ["a title that is a boolean", { ...introCall, title: true }],
   ["a description longer than 500 characters", { ...introCall, description: "a".repeat(501) }],
+  ["a null description", { ...introCall, description: null }],
   ["no duration", withoutDuration],
   ["a duration below 15 minutes", { ...introCall, durationMinutes: 0 }],
   ["a duration above 540 minutes", { ...introCall, durationMinutes: 555 }],
   ["a duration not a multiple of 15", { ...introCall, durationMinutes: 20 }],
   ["a fractional duration", { ...introCall, durationMinutes: 22.5 }],
+  ["a duration given as a string", { ...introCall, durationMinutes: "30" }],
 ])("%s is a data error and nothing is created", async (_, payload) => {
   const app = buildTestApp();
 

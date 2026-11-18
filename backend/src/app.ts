@@ -79,7 +79,8 @@ export function buildApp(
   { frontendRoot, ...options }: AppOptions = {},
   beforeRoutes?: (app: FastifyInstance) => void,
 ) {
-  const app = Fastify(options);
+  // Requests are validated exactly as the contract states: a wrongly typed field is a data error, not converted.
+  const app = Fastify({ ajv: { customOptions: { coerceTypes: false } }, ...options });
   // Each app gets its own empty storage, so tests never share data.
   const eventTypes: EventType[] = [];
   const bookings: Booking[] = [];

@@ -123,6 +123,8 @@ test.each([
   ["an empty name", { ...request, guestName: "" }],
   ["a name of spaces only", { ...request, guestName: "   " }],
   ["a name longer than 100 characters", { ...request, guestName: "a".repeat(101) }],
+  ["a name that is a number", { ...request, guestName: 42 }],
+  ["a name that is a boolean", { ...request, guestName: true }],
   ["no email", withoutEmail],
   ["an email without a domain", { ...request, guestEmail: "anna@" }],
   ["an email without @", { ...request, guestEmail: "anna" }],
