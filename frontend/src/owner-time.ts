@@ -1,5 +1,7 @@
 // Moments come in UTC; pages show them in the owner's time zone, whatever the browser's is.
 const ownerTimeZone = "Europe/Moscow";
+// The caption naming that zone, shown next to the times; the spec fixes it as text, not Intl output.
+export const ownerTimeZoneCaption = "Московское время (UTC+3)";
 
 // «10:00».
 export const clockTime = new Intl.DateTimeFormat("ru", {

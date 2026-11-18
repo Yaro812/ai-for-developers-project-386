@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { listUpcomingBookings } from "../generated/sdk.gen.ts";
 import type { Booking } from "../generated/types.gen.ts";
-import { longDay, timeRange } from "../owner-time.ts";
+import { longDay, ownerTimeZoneCaption, timeRange } from "../owner-time.ts";
 
 const title = "Предстоящие бронирования";
 
@@ -26,7 +26,7 @@ export default function UpcomingBookingsPage() {
         {bookings?.length === 0 && <Text>Предстоящих бронирований нет</Text>}
         {!!bookings?.length && (
           <>
-            <Text>Московское время (UTC+3)</Text>
+            <Text>{ownerTimeZoneCaption}</Text>
             <Table>
               <Table.Thead>
                 <Table.Tr>

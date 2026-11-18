@@ -15,7 +15,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { createBooking, getEventType, listSlots } from "../generated/sdk.gen.ts";
 import type { Booking, BookingWindowDay, EventType, Slot } from "../generated/types.gen.ts";
-import { clockTime, longDay, timeRange } from "../owner-time.ts";
+import { clockTime, longDay, ownerTimeZoneCaption, timeRange } from "../owner-time.ts";
 
 // A window day is a plain date in the owner's time zone; read at UTC midnight, it formats back to itself in UTC.
 const dayLabel = new Intl.DateTimeFormat("ru", {
@@ -151,7 +151,7 @@ export default function BookingPage() {
               </Title>
               <Text>{booking.eventType.title}</Text>
               <Text>{interval(booking)}</Text>
-              <Text>Московское время (UTC+3)</Text>
+              <Text>{ownerTimeZoneCaption}</Text>
               <Text>{booking.guestName}</Text>
               <Text>{booking.guestEmail}</Text>
               <Anchor component={Link} to="/book">
@@ -184,7 +184,7 @@ export default function BookingPage() {
               {!day && <Text>В ближайшие 14 дней свободного времени нет</Text>}
               {day && (
                 <Stack gap="xs">
-                  <Text>Московское время (UTC+3)</Text>
+                  <Text>{ownerTimeZoneCaption}</Text>
                   <SimpleGrid cols={{ base: 3, xs: 4, sm: 6 }}>
                     {day.slots.map(({ start }) => (
                       <Button
