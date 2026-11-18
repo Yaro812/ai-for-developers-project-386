@@ -4,6 +4,9 @@ import { buildApp } from "./app.ts";
 // `mise run build` puts the frontend here; in development Vite serves it instead.
 const frontendRoot = fileURLToPath(new URL("../../frontend/dist", import.meta.url));
 const app = buildApp({ logger: true, frontendRoot });
+// In a container Node runs as PID 1, which ignores these signals without a handler,
+// so `docker stop` and Ctrl+C would wait for SIGKILL.
+for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => void app.close());
 
 try {
   await app.listen({
