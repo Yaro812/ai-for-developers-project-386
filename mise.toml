@@ -51,7 +51,7 @@ depends = ["install"]
 run = "hk fix --all"
 
 [tasks.typecheck]
-description = "Type-check backend and frontend"
+description = "Type-check backend, frontend and e2e"
 depends = ["sdk"]
 run = "npm run typecheck --workspaces --if-present"
 
