@@ -6,6 +6,7 @@ import EventTypeCatalogPage from "./pages/EventTypeCatalogPage.tsx";
 import HomePage from "./pages/HomePage.tsx";
 import NewEventTypePage from "./pages/NewEventTypePage.tsx";
 import NotFoundPage from "./pages/NotFoundPage.tsx";
+import UpcomingBookingsPage from "./pages/UpcomingBookingsPage.tsx";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/book" element={<EventTypeCatalogPage />} />
           <Route path="/book/:id" element={<BookingPage />} />
           <Route path="/owner/event-types/new" element={<NewEventTypePage />} />
+          <Route path="/owner/bookings" element={<UpcomingBookingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>

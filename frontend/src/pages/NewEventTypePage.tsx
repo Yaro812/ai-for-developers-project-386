@@ -102,6 +102,9 @@ export default function NewEventTypePage() {
             </Group>
           </Stack>
         </form>
+        <Anchor component={Link} to="/owner/bookings">
+          Предстоящие бронирования
+        </Anchor>
       </Stack>
     </Container>
   );
