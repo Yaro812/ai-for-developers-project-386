@@ -20,6 +20,12 @@ model ApiError {
   message: string;
 }
 
+/** No route matches a path under `/api/`. No operation returns it, so the server answers it from its not-found handler. */
+model RouteNotFoundError extends ApiError {
+  @statusCode statusCode: 404;
+  code: "ROUTE_NOT_FOUND";
+}
+
 model Health {
   status: "ok";
 }
