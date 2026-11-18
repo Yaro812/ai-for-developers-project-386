@@ -19,6 +19,35 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EventType'
+    post:
+      operationId: createEventType
+      description: Checks the data first, then whether the id is taken.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '400':
+          description: The request breaks the contract schema; Fastify's request validation answers it.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Another event type already has this id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTypeIdTakenError'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventType'
   /api/health:
     get:
       operationId: getHealth
@@ -81,6 +110,18 @@ components:
           maximum: 540
           multipleOf: 15
       description: A kind of call the owner offers.
+    EventTypeIdTakenError:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - EVENT_TYPE_ID_TAKEN
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+      description: Another event type already has this id.
     Health:
       type: object
       required:
@@ -102,3 +143,15 @@ components:
       allOf:
         - $ref: '#/components/schemas/ApiError'
       description: No route matches a path under `/api/`. No operation returns it, so the server answers it from its not-found handler.
+    ValidationError:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - FST_ERR_VALIDATION
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+      description: The request breaks the contract schema; Fastify's request validation answers it.

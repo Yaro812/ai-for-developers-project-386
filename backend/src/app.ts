@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import createError from "@fastify/error";
 import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import openapiGlue from "fastify-openapi-glue";
@@ -6,6 +7,13 @@ import type { RouteHandlers } from "./generated/fastify.gen.ts";
 import type { EventType, RouteNotFoundError } from "./generated/types.gen.ts";
 
 const specification = fileURLToPath(new URL("../../contract/openapi.yaml", import.meta.url));
+
+// Handlers throw these; Fastify answers `{ statusCode, code, error, message }`, the contract's error format.
+const EventTypeIdTaken = createError(
+  "EVENT_TYPE_ID_TAKEN",
+  "Event type id %s is already taken",
+  409,
+);
 
 export type AppOptions = FastifyServerOptions & {
   /** Directory of the built frontend, served next to the API; without it the app serves only the API. */
@@ -27,6 +35,16 @@ export function buildApp(
     },
     async listEventTypes(_request, reply) {
       return reply.code(200).send(eventTypes);
+    },
+    // The id check and the save run with no `await` between them,
+    // so of two simultaneous requests with one id the second sees the first and gets 409.
+    async createEventType(request, reply) {
+      const eventType = request.body;
+      if (eventTypes.some(({ id }) => id === eventType.id)) {
+        throw new EventTypeIdTaken(eventType.id);
+      }
+      eventTypes.push(eventType);
+      return reply.code(201).send(eventType);
     },
   };
 

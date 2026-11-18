@@ -26,6 +26,18 @@ model RouteNotFoundError extends ApiError {
   code: "ROUTE_NOT_FOUND";
 }
 
+/** The request breaks the contract schema; Fastify's request validation answers it. */
+model ValidationError extends ApiError {
+  @statusCode statusCode: 400;
+  code: "FST_ERR_VALIDATION";
+}
+
+/** Another event type already has this id. */
+model EventTypeIdTakenError extends ApiError {
+  @statusCode statusCode: 409;
+  code: "EVENT_TYPE_ID_TAKEN";
+}
+
 model Health {
   status: "ok";
 }
@@ -61,3 +73,11 @@ op getHealth(): Health;
 @route("/api/event-types")
 @get
 op listEventTypes(): EventType[];
+
+/** Checks the data first, then whether the id is taken. */
+@route("/api/event-types")
+@post
+op createEventType(@body eventType: EventType): {
+  @statusCode statusCode: 201;
+  @body eventType: EventType;
+} | ValidationError | EventTypeIdTakenError;
