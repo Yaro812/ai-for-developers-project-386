@@ -41,3 +41,17 @@ The `down` command works by project id alone, without the compose file or the wo
 Для работы по тикету добавляй его ключ в заголовок.
 В описании объясняй причину изменения и новое поведение.
 Включай в коммит только изменения своей задачи.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`Yaro812/ai-for-developers-project-386`), operated through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root, created lazily. See `docs/agents/domain.md`.
