@@ -38,6 +38,12 @@ model EventTypeIdTakenError extends ApiError {
   code: "EVENT_TYPE_ID_TAKEN";
 }
 
+/** No event type has this id. */
+model EventTypeNotFoundError extends ApiError {
+  @statusCode statusCode: 404;
+  code: "EVENT_TYPE_NOT_FOUND";
+}
+
 model Health {
   status: "ok";
 }
@@ -81,3 +87,8 @@ op createEventType(@body eventType: EventType): {
   @statusCode statusCode: 201;
   @body eventType: EventType;
 } | ValidationError | EventTypeIdTakenError;
+
+/** The path `id` has no `pattern` or `maxLength`, so any unknown id gets 404, never 400. */
+@route("/api/event-types/{id}")
+@get
+op getEventType(@path id: string): EventType | EventTypeNotFoundError;

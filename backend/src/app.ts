@@ -14,6 +14,7 @@ const EventTypeIdTaken = createError(
   "Event type id %s is already taken",
   409,
 );
+const EventTypeNotFound = createError("EVENT_TYPE_NOT_FOUND", "Event type %s not found", 404);
 
 export type AppOptions = FastifyServerOptions & {
   /** Directory of the built frontend, served next to the API; without it the app serves only the API. */
@@ -45,6 +46,11 @@ export function buildApp(
       }
       eventTypes.push(eventType);
       return reply.code(201).send(eventType);
+    },
+    async getEventType(request, reply) {
+      const eventType = eventTypes.find(({ id }) => id === request.params.id);
+      if (!eventType) throw new EventTypeNotFound(request.params.id);
+      return reply.code(200).send(eventType);
     },
   };
 

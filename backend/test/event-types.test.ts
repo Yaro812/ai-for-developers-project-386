@@ -151,3 +151,32 @@ test("the catalog lists event types in creation order", async () => {
 
   expect(await listEventTypes(app)).toEqual([review, introCall]);
 });
+
+test("a created event type is answered by its id", async () => {
+  const app = buildTestApp();
+  await createEventType(app, introCall);
+
+  const response = await app.inject({ method: "GET", url: "/api/event-types/intro-30" });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toEqual(introCall);
+});
+
+test.each([
+  ["an id no event type has", "review-90"],
+  ["an id breaking the id rule", "Intro_30"],
+  ["an id longer than 50 characters", "a".repeat(51)],
+])("%s is not found", async (_, id) => {
+  const app = buildTestApp();
+  await createEventType(app, introCall);
+
+  const response = await app.inject({ method: "GET", url: `/api/event-types/${id}` });
+
+  expect(response.statusCode).toBe(404);
+  expect(response.json()).toEqual({
+    statusCode: 404,
+    code: "EVENT_TYPE_NOT_FOUND",
+    error: "Not Found",
+    message: expect.any(String),
+  });
+});
