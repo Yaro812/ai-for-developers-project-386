@@ -131,6 +131,18 @@ components:
           type: string
           enum:
             - ok
+    RouteNotFoundError:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          enum:
+            - ROUTE_NOT_FOUND
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+      description: No route matches a path under `/api/`. No operation returns it, so the server answers it from its not-found handler.
     ValidationError:
       type: object
       required:
