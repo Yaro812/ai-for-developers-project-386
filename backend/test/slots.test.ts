@@ -61,12 +61,13 @@ test("a weekday has 60-minute slots every 15 minutes from 09:00, the last starti
 
   expect(thursday.date).toBe("2026-11-19");
   expect(thursday.slots.slice(0, 2)).toEqual([
-    { start: "2026-11-19T06:00:00.000Z", end: "2026-11-19T07:00:00.000Z" },
-    { start: "2026-11-19T06:15:00.000Z", end: "2026-11-19T07:15:00.000Z" },
+    { start: "2026-11-19T06:00:00.000Z", end: "2026-11-19T07:00:00.000Z", free: true },
+    { start: "2026-11-19T06:15:00.000Z", end: "2026-11-19T07:15:00.000Z", free: true },
   ]);
   expect(thursday.slots.at(-1)).toEqual({
     start: "2026-11-19T14:00:00.000Z",
     end: "2026-11-19T15:00:00.000Z",
+    free: true,
   });
   const starts = thursday.slots.map(({ start }) => Date.parse(start));
   expect(starts.slice(1).map((start, index) => start - starts[index])).toEqual(
@@ -81,7 +82,7 @@ test("a 540-minute call has the single slot 09:00–18:00 a day", async () => {
   const [, thursday] = await listSlots(app);
 
   expect(thursday.slots).toEqual([
-    { start: "2026-11-19T06:00:00.000Z", end: "2026-11-19T15:00:00.000Z" },
+    { start: "2026-11-19T06:00:00.000Z", end: "2026-11-19T15:00:00.000Z", free: true },
   ]);
 });
 
@@ -109,6 +110,7 @@ test("today has only slots starting after the current moment", async () => {
   expect(today.slots[0]).toEqual({
     start: "2026-11-18T07:30:00.000Z",
     end: "2026-11-18T08:30:00.000Z",
+    free: true,
   });
 });
 
@@ -132,6 +134,7 @@ test("at 23:30 UTC the window starts with the next day in Moscow", async () => {
   expect(days[0].slots[0]).toEqual({
     start: "2026-11-19T06:00:00.000Z",
     end: "2026-11-19T07:00:00.000Z",
+    free: true,
   });
   expect(days.at(-1)?.date).toBe("2026-12-02");
 });

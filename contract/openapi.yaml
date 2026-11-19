@@ -198,6 +198,7 @@ components:
         - end
         - guestName
         - guestEmail
+        - createdAt
       properties:
         eventType:
           allOf:
@@ -214,6 +215,10 @@ components:
           type: string
         guestEmail:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+          description: The server's current moment when it saved the booking.
       description: 'A booked interval. It has no id: bookings never overlap, so `start` is unique.'
     BookingConflictError:
       type: object
@@ -263,7 +268,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Slot'
-          description: Free slots in ascending order; empty on weekends, a past today, or a fully booked day.
+          description: Every slot in ascending order, free or not; empty on weekends or a past today.
       description: A day of the booking window.
     EventType:
       type: object
@@ -344,6 +349,7 @@ components:
       required:
         - start
         - end
+        - free
       properties:
         start:
           type: string
@@ -351,6 +357,9 @@ components:
         end:
           type: string
           format: date-time
+        free:
+          type: boolean
+          description: False when the slot overlaps a booking of any event type.
       description: An interval a booking may take; the server answers its moments in UTC, e.g. `2026-11-19T06:00:00.000Z`.
     UnavailableTimeError:
       type: object

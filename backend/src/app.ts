@@ -39,14 +39,14 @@ const workingHours = {
 };
 
 // The current moment comes from the runtime clock; `Date.now()` lets tests set it.
-function bookingWindow(durationMinutes: number): BookingWindowDay[] {
+function bookingWindow(durationMinutes: number) {
   const now = Temporal.Instant.fromEpochMilliseconds(Date.now());
   const today = now.toZonedDateTimeISO(ownerTimeZone).toPlainDate();
   return Array.from({ length: bookingWindowDays }, (_, index) => {
     const date = today.add({ days: index });
     const at = (plainTime: Temporal.PlainTime) =>
       date.toZonedDateTime({ timeZone: ownerTimeZone, plainTime }).toInstant();
-    const slots = [];
+    const slots: Interval[] = [];
     if (date.dayOfWeek <= workingHours.lastWeekday) {
       const dayEnd = at(workingHours.end);
       for (let start = at(workingHours.start); ; start = start.add({ minutes: slotStepMinutes })) {
@@ -66,7 +66,8 @@ const utc = (instant: Temporal.Instant) => instant.toString({ fractionalSecondDi
 
 // Intervals are half-open, so one ending when the other starts does not overlap it.
 // Moments compare as numbers, so any offset in a request works.
-const overlaps = (a: Slot, b: Slot) =>
+type Interval = Pick<Slot, "start" | "end">;
+const overlaps = (a: Interval, b: Interval) =>
   Date.parse(a.start) < Date.parse(b.end) && Date.parse(b.start) < Date.parse(a.end);
 
 export type AppOptions = FastifyServerOptions & {
@@ -114,9 +115,12 @@ export function buildApp(
     async listSlots(request, reply) {
       const { durationMinutes } = findEventType(request.params.id);
       // A free slot overlaps no booking of any event type.
-      const days = bookingWindow(durationMinutes).map(({ date, slots }) => ({
+      const days: BookingWindowDay[] = bookingWindow(durationMinutes).map(({ date, slots }) => ({
         date,
-        slots: slots.filter((slot) => !bookings.some((booking) => overlaps(booking, slot))),
+        slots: slots.map((slot) => ({
+          ...slot,
+          free: !bookings.some((booking) => overlaps(booking, slot)),
+        })),
       }));
       return reply.code(200).send(days);
     },
@@ -133,7 +137,8 @@ export function buildApp(
       // Bookings of every event type share the owner's time.
       const conflict = bookings.find((booking) => overlaps(booking, slot));
       if (conflict) throw new BookingConflict(conflict.start);
-      const booking = { eventType, ...slot, guestName, guestEmail };
+      const createdAt = new Date().toISOString();
+      const booking = { eventType, ...slot, guestName, guestEmail, createdAt };
       bookings.push(booking);
       return reply.code(201).send(booking);
     },

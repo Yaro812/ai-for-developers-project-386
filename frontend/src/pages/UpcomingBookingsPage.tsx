@@ -1,9 +1,8 @@
-import { Anchor, Container, Loader, Stack, Table, Text, Title } from "@mantine/core";
+import { Card, Container, Loader, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { listUpcomingBookings } from "../generated/sdk.gen.ts";
 import type { Booking } from "../generated/types.gen.ts";
-import { longDay, ownerTimeZoneCaption, timeRange } from "../owner-time.ts";
+import { dateTime, longDay, ownerTimeZoneCaption, timeRange } from "../owner-time.ts";
 
 const title = "Предстоящие бронирования";
 
@@ -19,7 +18,7 @@ export default function UpcomingBookingsPage() {
   return (
     <Container component="main" py="xl">
       <title>{title}</title>
-      <Stack gap="lg" align="flex-start">
+      <Stack gap="lg">
         <Title>{title}</Title>
         {failed && <Text>Не удалось загрузить страницу, обновите её</Text>}
         {!bookings && !failed && <Loader role="progressbar" aria-label="Загрузка" />}
@@ -27,34 +26,20 @@ export default function UpcomingBookingsPage() {
         {!!bookings?.length && (
           <>
             <Text>{ownerTimeZoneCaption}</Text>
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Дата</Table.Th>
-                  <Table.Th>Время</Table.Th>
-                  <Table.Th>Тип встречи</Table.Th>
-                  <Table.Th>Имя</Table.Th>
-                  <Table.Th>Email</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {/* The server sends bookings by start; `start` is unique, as bookings never overlap. */}
-                {bookings.map((booking) => (
-                  <Table.Tr key={booking.start}>
-                    <Table.Td>{longDay.format(new Date(booking.start))}</Table.Td>
-                    <Table.Td>{timeRange(booking)}</Table.Td>
-                    <Table.Td>{booking.eventType.title}</Table.Td>
-                    <Table.Td>{booking.guestName}</Table.Td>
-                    <Table.Td>{booking.guestEmail}</Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+            {/* The server sends bookings by start; `start` is unique, as bookings never overlap. */}
+            {bookings.map((booking) => (
+              <Card key={booking.start} component="article" withBorder radius="lg" padding="lg">
+                <Text fw={700}>{booking.guestName}</Text>
+                <Text c="dimmed">{booking.guestEmail}</Text>
+                <Text c="dimmed">{booking.eventType.title}</Text>
+                <Text c="dimmed">
+                  Слот: {longDay.format(new Date(booking.start))}, {timeRange(booking)}
+                </Text>
+                <Text c="dimmed">Создано: {dateTime.format(new Date(booking.createdAt))}</Text>
+              </Card>
+            ))}
           </>
         )}
-        <Anchor component={Link} to="/owner/event-types/new">
-          Новый тип встречи
-        </Anchor>
       </Stack>
     </Container>
   );

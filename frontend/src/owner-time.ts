@@ -18,6 +18,13 @@ export const longDay = new Intl.DateTimeFormat("ru", {
   timeZone: ownerTimeZone,
 });
 
+// «27.03.2026, 14:40».
+export const dateTime = new Intl.DateTimeFormat("ru", {
+  dateStyle: "short",
+  timeStyle: "short",
+  timeZone: ownerTimeZone,
+});
+
 // «10:00–11:00».
 export const timeRange = ({ start, end }: { start: string; end: string }) =>
   `${clockTime.format(new Date(start))}–${clockTime.format(new Date(end))}`;
