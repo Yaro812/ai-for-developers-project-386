@@ -18,20 +18,30 @@ test("the owner creates an event type, a guest books it, the owner sees the book
   await page.goto("/");
   await page.getByRole("link", { name: "Записаться на звонок" }).click();
   await page.getByRole("link", { name: "Знакомство" }).click();
-  // Day buttons read «чт, 19 нояб.», slot buttons «10:00».
+  // Day buttons read «чт, 19 нояб., свободно: 35», slot buttons «10:00–10:30 Свободно».
   await page
-    .getByRole("button", { name: /^\S+, \d+ /, disabled: false })
+    .getByRole("button", { name: /^\S+, \d+ \S+, свободно/, disabled: false })
     .first()
     .click();
-  await page
-    .getByRole("button", { name: /^\d\d:\d\d$/ })
-    .first()
-    .click();
+  const slot = page.getByRole("button", { name: /^\d\d:\d\d–\d\d:\d\d/ }).first();
+  const slotName = await slot.textContent();
+  await slot.click();
+  await page.getByRole("button", { name: "Продолжить" }).click();
   await page.getByRole("textbox", { name: "Имя" }).fill("Анна");
   await page.getByRole("textbox", { name: "Email" }).fill(guestEmail);
-  await page.getByRole("button", { name: "Забронировать" }).click();
-  await expect(page.getByRole("heading", { name: "Звонок забронирован" })).toBeVisible();
+  await page.getByRole("button", { name: "Подтвердить бронирование" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Бронирование подтверждено. До встречи!" }),
+  ).toBeVisible();
 
-  await page.goto("/owner/bookings");
-  await expect(page.getByRole("row", { name: `Знакомство Анна ${guestEmail}` })).toBeVisible();
+  // The booked slot stays in the list and is no longer free.
+  await page.getByRole("button", { name: "Забронировать ещё" }).click();
+  await expect(
+    page.getByRole("button", { name: slotName!.replace("Свободно", " Занято") }),
+  ).toBeDisabled();
+
+  await page.getByRole("link", { name: "Предстоящие бронирования" }).click();
+  await expect(
+    page.getByRole("article").filter({ hasText: "Знакомство" }).filter({ hasText: guestEmail }),
+  ).toContainText("Анна");
 });
