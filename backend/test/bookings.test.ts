@@ -1,5 +1,6 @@
 import type { FastifyInstance as App } from "fastify";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import type { BookingWindowDay } from "../src/generated/types.gen.ts";
 import { buildTestApp } from "./app.ts";
 
 // Only `Date` is faked: the server reads the current moment from the runtime clock.
@@ -51,6 +52,8 @@ test("a booking is answered with 201, its event type and the end computed from t
     start: "2026-11-19T07:00:00.000Z",
     end: "2026-11-19T08:30:00.000Z",
     ...guest,
+    // The faked current moment.
+    createdAt: "2026-11-18T09:00:00.000Z",
   });
 });
 
@@ -275,13 +278,13 @@ test("a shorter booking inside a longer one of another event type is a conflict"
   expect(response.json()).toEqual(conflictError);
 });
 
-async function thursdaySlotStarts(app: App, eventTypeId: string) {
+async function thursdayFreeSlotStarts(app: App, eventTypeId: string) {
   const response = await app.inject({
     method: "GET",
     url: `/api/event-types/${eventTypeId}/slots`,
   });
-  const days = response.json<{ date: string; slots: { start: string }[] }[]>();
-  return days[1].slots.map(({ start }) => start);
+  const days = response.json<BookingWindowDay[]>();
+  return days[1].slots.filter(({ free }) => free).map(({ start }) => start);
 }
 
 // 33 one-hour slots start on Thursday, 09:00–17:00 in Moscow. A booking from 10:00 takes those
@@ -290,17 +293,20 @@ test.each([
   ["the same event type", "intro-60", "08:00", 33 - 7],
   ["another event type", "review-90", "08:30", 33 - 9],
 ])(
-  "slots overlapping a booking of %s are not offered",
+  "slots overlapping a booking of %s stay in the list but are not free",
   async (_, bookedEventTypeId, nextFreeStart, count) => {
     const app = await appWithEventTypes();
     await createBooking(app, bookedEventTypeId, { start: "2026-11-19T07:00:00.000Z", ...guest });
 
-    const starts = await thursdaySlotStarts(app, "intro-60");
+    const starts = await thursdayFreeSlotStarts(app, "intro-60");
 
     expect(starts.slice(0, 2)).toEqual([
       "2026-11-19T06:00:00.000Z",
       `2026-11-19T${nextFreeStart}:00.000Z`,
     ]);
     expect(starts).toHaveLength(count);
+    // The busy slots are still listed: Thursday keeps all 33.
+    const response = await app.inject({ method: "GET", url: "/api/event-types/intro-60/slots" });
+    expect(response.json<BookingWindowDay[]>()[1].slots).toHaveLength(33);
   },
 );

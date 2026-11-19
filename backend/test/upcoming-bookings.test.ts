@@ -38,6 +38,9 @@ async function book(app: App, eventTypeId: string, payload: object) {
   expect(response.statusCode).toBe(201);
 }
 
+// Every booking is saved at the faked current moment of `beforeEach`.
+const createdAt = "2026-11-18T09:00:00.000Z";
+
 const upcomingBookings = (app: App) => app.inject({ method: "GET", url: "/api/bookings" });
 
 test("bookings of every event type come in one list by start", async () => {
@@ -56,12 +59,14 @@ test("bookings of every event type come in one list by start", async () => {
       start: "2026-11-19T07:00:00.000Z",
       end: "2026-11-19T08:00:00.000Z",
       ...boris,
+      createdAt,
     },
     {
       eventType: reviewCall,
       start: "2026-11-20T07:00:00.000Z",
       end: "2026-11-20T08:30:00.000Z",
       ...anna,
+      createdAt,
     },
   ]);
 });
@@ -82,6 +87,7 @@ test("an ongoing booking stays in the list until its end, a finished one leaves 
       start: "2026-11-18T11:00:00.000Z",
       end: "2026-11-18T12:30:00.000Z",
       ...boris,
+      createdAt,
     },
   ]);
 

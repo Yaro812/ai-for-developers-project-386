@@ -75,6 +75,9 @@ model EventType {
 model Slot {
   start: utcDateTime;
   end: utcDateTime;
+
+  /** False when the slot overlaps a booking of any event type. */
+  free: boolean;
 }
 
 /** A day of the booking window. */
@@ -82,7 +85,7 @@ model BookingWindowDay {
   /** The day in the owner's time zone, `Europe/Moscow`. */
   date: plainDate;
 
-  /** Free slots in ascending order; empty on weekends, a past today, or a fully booked day. */
+  /** Every slot in ascending order, free or not; empty on weekends or a past today. */
   slots: Slot[];
 }
 
@@ -153,6 +156,9 @@ model Booking {
 
   guestName: string;
   guestEmail: string;
+
+  /** The server's current moment when it saved the booking. */
+  createdAt: utcDateTime;
 }
 
 /** Checks the data, then the event type, then whether the interval is a slot, then whether it overlaps a booking of any event type. */
