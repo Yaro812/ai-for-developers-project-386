@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/Yaro812/ai-for-developers-project-386/compare/v0.1.0...v0.2.0) (2026-11-19)
+
+
+### Features
+
+* **backend:** list busy slots and record when a booking was created ([62f8fa2](https://github.com/Yaro812/ai-for-developers-project-386/commit/62f8fa2ce509857a46e8a101ee5770ddc48e8b63))
+* **frontend:** reference design with a month calendar and slot statuses ([814a5e0](https://github.com/Yaro812/ai-for-developers-project-386/commit/814a5e06e62a211b421ca282b0267ef5780323f3))
+
 ## 0.1.0 (2026-11-18)
 
 
