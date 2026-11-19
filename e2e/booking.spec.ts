@@ -19,10 +19,17 @@ test("the owner creates an event type, a guest books it, the owner sees the book
   await page.getByRole("link", { name: "Записаться на звонок" }).click();
   await page.getByRole("link", { name: "Знакомство" }).click();
   // Day buttons read «чт, 19 нояб., свободно: 35», slot buttons «10:00–10:30 Свободно».
-  await page
-    .getByRole("button", { name: /^\S+, \d+ \S+, свободно/, disabled: false })
-    .first()
-    .click();
+  // The guest's day must keep a free slot after the booking, or the page moves to another day.
+  // Booking the first of three free slots takes two at most, and the last hour of a working day
+  // leaves fewer; if that day is the only one of its month, the next month has a roomy day.
+  await expect(page.getByRole("button", { name: /^\S+, \d+ \S+, свободно/ }).first()).toBeVisible();
+  const roomyDay = page
+    .getByRole("button", { name: /^\S+, \d+ \S+, свободно: ([3-9]|\d{2,})$/ })
+    .first();
+  if ((await roomyDay.count()) === 0) {
+    await page.getByRole("button", { name: "Следующий месяц" }).click();
+  }
+  await roomyDay.click();
   const slot = page.getByRole("button", { name: /^\d\d:\d\d–\d\d:\d\d/ }).first();
   const slotName = await slot.textContent();
   await slot.click();
